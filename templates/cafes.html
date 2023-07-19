@@ -15,22 +15,29 @@
     <div class="col-sm-12">
 
       <h1>All Cafes</h1>
+      <div class="col-lg-8 col-md-10 mx-auto">
+        {% for cafe in cafes %}
+        <div class="post-preview">
+          <a href="{{ url_for('show_post', post_id=post.id) }}">
+            <h2 class="post-title">
+              {{post.title}}
+            </h2>
+            <h3 class="post-subtitle">
+              {{post.subtitle}}
+            </h3>
+          </a>
+          <p class="post-meta">Posted by
+            <a href="#">{{post.author.name}}</a>
+            on {{post.date}}
 
-	  <table class="table">
-		  {% for row in cafes %}
-		  <tr>
-              {% for data in row %}
-			        {% if data[0:4] == 'http' %}
-			            <th>
-			                <a href="{{ data }}">Maps Link</a>
-			            </th>
-			        {% else %}
-			            <th>{{ data }}</th>
-			        {% endif %}
-	          {% endfor %}
-		  </tr>
-		  {% endfor %}
-  	  </table>
+	          {% if current_user.id == 1: %}
+            <a href="{{url_for('delete_post', post_id=post.id) }}">✘</a>
+	          {% endif %}
+
+          </p>
+        </div>
+        <hr>
+        {% endfor %}
 
       <p><a href="{{ url_for('home') }}">Return to index page</a></p>
 	    <p><a href="{{ url_for('add') }}">Add a cafe to the database</a></p>
