@@ -7,7 +7,6 @@ from flask_ckeditor import CKEditorField
 ##WTForm
 
 class AddCafeForm(FlaskForm):
-
     name = StringField("Name of Cafe", validators=[DataRequired()])
     map_url = StringField("Map url", validators=[DataRequired(), URL()])
     img_url = StringField("Img url", validators=[DataRequired(), URL()])
@@ -17,7 +16,7 @@ class AddCafeForm(FlaskForm):
     has_wifi = BooleanField(validators=[DataRequired()])
     can_take_calls = BooleanField(validators=[DataRequired()])
     seats = StringField("Number of seats", validators=[DataRequired()])
-    coffee_price = IntegerField("Coffee price in rands", validators=[DataRequired()])
+    coffee_price = StringField("Coffee price in pounds", validators=[DataRequired()])
     submit = SubmitField("Submit Cafe")
 
 

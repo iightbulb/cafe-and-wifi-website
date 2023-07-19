@@ -89,8 +89,9 @@ with app.app_context():
     @app.route("/cafes")
     def cafes():
         # display all current relative info from updated db
-        cafe = Cafes.query.all()
-        return render_template("cafes.html", cafes=cafe)
+        cafe = Cafe.query.all()
+        print(cafes)
+        return render_template("cafes.html", all_cafes=cafe)
 
 
     @app.route("/add", methods=["POST", "GET"])
