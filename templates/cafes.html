@@ -2,46 +2,61 @@
 
 {% block styles %}
 {{super()}}
-<link rel="stylesheet"
-      href="{{ url_for('.static', filename='css/styles.css') }}">
+
+<link rel="stylesheet" href="{{ url_for('.static', filename='css/clean-blog.css') }}">
+
 {% endblock %}
 
 {% block title %}Restaurants{% endblock %}
 
+
 {% block content %}
+<body style="background-image: url({{ url_for('static', filename='img/coffee.jpg')}})">
+	<div class="container">
+	  <div class="row">
+	    <div class="col-sm-12">
 
-<div class="container">
-  <div class="row">
-    <div class="col-sm-12">
+          <div class="col-sm-6">
+	        <h1>All Cafes</h1>
+          </div>
+	      <div class="col-sm-6">
+		      <p><a href="{{ url_for('home') }}">Return to index page</a></p>
+		      <p><a href="{{ url_for('add') }}">Add a cafe to the database</a></p>
+          </div>
 
-      <h1>All Cafes</h1>
-      <div class="col-lg-8 col-md-10 mx-auto">
-        {% for cafe in all_cafes %}
-        <div class="post-preview">
-          <a href="{{ url_for('cafes', cafe_id=cafe.id) }}">
-            <h2 class="post-title">
-              {{cafe.name}}
-            </h2>
-            <h3 class="post-subtitle">
-              {{cafe.map_url}}
-            </h3>
-          </a>
-          <p class="post-meta">Posted by
-            <a href="#">{{cafe.name}}</a>
+	      <div class="col-lg-8 col-md-10 mx-auto">
+	        {% for cafe in all_cafes %}
+	        <div class="post-preview">
+	          <a href="{{ url_for('cafes', cafe_id=cafe.id) }}">
+	            <h2 class="post-title">
+	              {{cafe.name}}
+	            </h2>
+	            <h3 class="post-subtitle">
 
-	          {% if current_user.id == 1: %}
-            <a href="{{url_for('cafes', cafe_id=cafe.id) }}">✘</a>
-	          {% endif %}
+	            </h3>
+	          </a>
+	          <p class="post-meta">Posted by
+	            <a href="#">{{cafe.name}}</a>
 
-          </p>
-        </div>
-        <hr>
-        {% endfor %}
+		          {% if current_user.id == 1: %}
+	            <a href="{{url_for('cafes', cafe_id=cafe.id) }}">✘</a>
+		          {% endif %}
 
-      <p><a href="{{ url_for('home') }}">Return to index page</a></p>
-	    <p><a href="{{ url_for('add') }}">Add a cafe to the database</a></p>
-    </div>
-  </div>
-</div>
+	          </p>
 
+	        </div>
+
+	        <hr>
+
+	        {% endfor %}
+	      </div>
+
+	    </div>
+	  </div>
+	</div>
+
+</body>
 {% endblock %}
+
+
+
