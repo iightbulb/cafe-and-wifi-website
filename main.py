@@ -10,6 +10,8 @@ import os
 from flask_gravatar import Gravatar
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import date
+
 
 def configure():
     load_dotenv()
@@ -58,20 +60,14 @@ class Cafe(db.Model):
 class Cafes(db.Model):
     __tablename__ = 'cafes'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+
     author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+
     title = db.Column(db.String(100), nullable=False, unique=True)
     subtitle = db.Column(db.String(100), nullable=False)
     date = db.Column(db.String(100), nullable=False)
     body = db.Column(db.Text, nullable=False)
     img_url = db.Column(db.String(100), nullable=False)
-
-
-class Comment(db.Model):
-    __tablename__ = "comments"
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    post_id = db.Column(db.Integer, db.ForeignKey("cafes.id"))
-    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    text = db.Column(db.Text, nullable=False)
 
 
 class User(UserMixin, db.Model):
@@ -112,28 +108,31 @@ with app.app_context():
     def add():
         # add form allowing user to add cafe to db
         form = AddCafeForm()
-        return render_template("add_coffee_shop.html", form=form)
+        if form.validate_on_submit():
+            new_post = Cafe(
+                name=form.name.data,
+                map_url=form.map_url.data,
+                img_url=form.img_url.data,
+                location=form.location.data,
+                has_sockets=form.has_sockets.data,
+                has_toilet=form.has_toilet.data,
+                has_wifi=form.has_wifi.data,
+                can_take_calls=form.can_take_calls.data,
+                seats=form.seats.data,
+                coffee_price=form.coffee_price.data,
+                author=current_user,
+                date=date.today().strftime("%B %d, %Y")
+            )
+            db.session.add(new_post)
+            db.session.commit()
+            return redirect(url_for("cafes"))
+        return render_template("cafe.html", form=form, current_user=current_user)
 
 
     @app.route("/post/<int:cafe_id>", methods=["POST", "GET"])
     def show_cafe(cafe_id):
-        requested_post = Cafe.query.get(cafe_id)
-        comment_form = CommentForm()
-
-        if comment_form.validate_on_submit():
-            if not current_user.is_authenticated:
-                flash("You need to login or register to comment.")
-                return redirect(url_for("login"))
-
-            new_comment = Comment(
-                text=comment_form.comment_text.data,
-                comment_author=current_user,
-                parent_post=requested_post,
-            )
-            db.session.add(new_comment)
-            db.session.commit()
-
-        return render_template("post.html", post=requested_post, current_user=current_user, form=comment_form)
+        requested_cafe = Cafe.query.get(cafe_id)
+        return render_template("cafe.html", cafe=requested_cafe, current_user=current_user)
 
 
     @app.route("/register", methods=["POST", "GET"])
@@ -196,7 +195,6 @@ with app.app_context():
 
 
     @app.route("/delete/<int:cafe_id>")
-    @admin_only
     def delete_post(cafe_id):
         post_to_delete = Cafe.query.get(cafe_id)
         db.session.delete(post_to_delete)
