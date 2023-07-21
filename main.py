@@ -1,12 +1,15 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, flash, abort
 from flask_bootstrap import Bootstrap
+from flask_ckeditor import CKEditor
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from forms import AddCafeForm, RegisterForm, LoginForm, CommentForm
 from dotenv import load_dotenv
 import os
-
+from flask_gravatar import Gravatar
+from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def configure():
     load_dotenv()
@@ -16,7 +19,9 @@ configure()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('appconfigsecretkey')
+ckeditor = CKEditor(app)
 Bootstrap(app)
+gravatar = Gravatar(app, size=100, rating='g', default='retro', force_default=False, force_lower=False, use_ssl=False, base_url=None)
 
 # CONNECT TO DB
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cafes.db'
@@ -80,6 +85,15 @@ class User(UserMixin, db.Model):
 with app.app_context():
     db.create_all()
 
+    def admin_only(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if current_user.id != 1:
+                return abort(403)
+            return f(*args, **kwargs)
+
+        return decorated_function
+
     # all Flask routes below
     @app.route("/")
     def home():
@@ -98,8 +112,96 @@ with app.app_context():
     def add():
         # add form allowing user to add cafe to db
         form = AddCafeForm()
-        return render_template("add.html", form=form)
+        return render_template("add_coffee_shop.html", form=form)
 
+
+    @app.route("/post/<int:cafe_id>", methods=["POST", "GET"])
+    def show_cafe(cafe_id):
+        requested_post = Cafe.query.get(cafe_id)
+        comment_form = CommentForm()
+
+        if comment_form.validate_on_submit():
+            if not current_user.is_authenticated:
+                flash("You need to login or register to comment.")
+                return redirect(url_for("login"))
+
+            new_comment = Comment(
+                text=comment_form.comment_text.data,
+                comment_author=current_user,
+                parent_post=requested_post,
+            )
+            db.session.add(new_comment)
+            db.session.commit()
+
+        return render_template("post.html", post=requested_post, current_user=current_user, form=comment_form)
+
+
+    @app.route("/register", methods=["POST", "GET"])
+    def register():
+        register_form = RegisterForm()
+        if register_form.validate_on_submit():
+            if User.query.filter_by(email=register_form.email.data).first():
+                flash("You've already signed up with that email, log in instead!")
+                return redirect(url_for('login'))
+
+            password_hash_with_salt = generate_password_hash(
+                register_form.password.data,
+                method='pbkdf2:sha256',
+                salt_length=8
+            )
+
+            new_user = User(
+
+                email=register_form.email.data,
+                name=register_form.name.data,
+                password=password_hash_with_salt
+            )
+
+            db.session.add(new_user)
+            db.session.commit()
+
+            login_user(new_user)
+            return redirect(url_for('cafes'))
+        return render_template("register.html", form=register_form, current_user=current_user)
+
+
+    @app.route('/login', methods=["GET", "POST"])
+    def login():
+        login_form = LoginForm()
+
+        if login_form.validate_on_submit():
+            input_email = login_form.email.data
+            input_password = login_form.password.data
+
+            user = User.query.filter_by(email=input_email).first()
+
+            if not user:
+                flash("That email doesn't exist.")
+                return redirect(url_for('login'))
+
+            elif not check_password_hash(pwhash=user.password, password=input_password):
+                flash("Incorrect password.")
+                return redirect(url_for('login'))
+
+            else:
+                login_user(user)
+                return redirect(url_for('cafes'))
+
+        return render_template("login.html", form=login_form, current_user=current_user)
+
+    @app.route('/logout')
+    def logout():
+        logout_user()
+        return redirect(url_for("cafes"))
+
+
+    @app.route("/delete/<int:cafe_id>")
+    @admin_only
+    def delete_post(cafe_id):
+        post_to_delete = Cafe.query.get(cafe_id)
+        db.session.delete(post_to_delete)
+        db.session.commit()
+        return redirect(url_for('cafes'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

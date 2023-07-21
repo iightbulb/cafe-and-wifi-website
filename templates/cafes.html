@@ -10,24 +10,18 @@
 {% block title %}Restaurants{% endblock %}
 
 
+
 {% block content %}
-<body style="background-image: url({{ url_for('static', filename='img/coffee.jpg')}})">
+{% include 'header.html' %}
+<body style="background-image: url({{url_for('static', filename='img/coffee.jpg')}})">
 	<div class="container">
 	  <div class="row">
 	    <div class="col-sm-12">
 
-          <div class="col-sm-6">
-	        <h1>All Cafes</h1>
-          </div>
-	      <div class="col-sm-6">
-		      <p><a href="{{ url_for('home') }}">Return to index page</a></p>
-		      <p><a href="{{ url_for('add') }}">Add a cafe to the database</a></p>
-          </div>
-
 	      <div class="col-lg-8 col-md-10 mx-auto">
 	        {% for cafe in all_cafes %}
 	        <div class="post-preview">
-	          <a href="{{ url_for('cafes', cafe_id=cafe.id) }}">
+	          <a href="{{ url_for('show_cafe', cafe_id=cafe.id) }}">
 	            <h2 class="post-title">
 	              {{cafe.name}}
 	            </h2>
@@ -35,7 +29,7 @@
 
 	            </h3>
 	          </a>
-	          <p class="post-meta">Posted by
+	          <p class="post-meta">Added by
 	            <a href="#">{{cafe.name}}</a>
 
 		          {% if current_user.id == 1: %}
@@ -56,6 +50,7 @@
 	</div>
 
 </body>
+{% include 'footer.html' %}
 {% endblock %}
 
 
